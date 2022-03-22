@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <div>
+        <input type="file" accept="image/*" id="selector"><br/>
+        <image src="#" style="width: 200px;height: 200px;" id="previewer"></image>
+    </div>
+    <div>
+        <input type="number" min="1" max="2048" id="col" value="72"/>
+        <input type="number" min="1" max="2048" id="row" value="32"/>
+        <button id="convert">Convert</button>
+    </div>
+    <pre id="content"></pre>
+</body>
+
+<script>
+    window.addEventListener("load",function (){
+        var map="MNGmdhyso+/:-.` ".split("");//用字母符号代替颜色
+        var selector=document.getElementById("selector");
+        var previewer=document.getElementById("previewer");
+        var convert=document.getElementById("convert");
+        var content=document.getElementById("content");
+        selector.addEventListener("change",function (){
+            var reader = new FileReader();
+            var file=selector.files[0];
+            reader.readAsDataURL(file);
+            reader.addEventListener("load",function (){
+                //图片加载好后，展示出来
+                previewer.src=this.result;
+            },false);
+        },false);
+        convert.addEventListener("click",function (){
+            //首先取出设置宽高值
+            var width=parseInt(document.getElementById("col").value);
+            var height=parseInt(document.getElementById("row").value);
+            //建一个画板
+            var canvas=document.createElement("canvas");
+            //设置画板大小
+            canvas.width=width;
+            canvas.height=height;
+            var ctx=canvas.getContext("2d");
+            //把选择的图片画到画板上,扑满
+            ctx.drawImage(previewer,0,0,width,height);
+            //从画板取出象素数据
+            var pixels=ctx.getImageData(8,0,width,height).data;
+            //根居黎素色值许算出亮度值(彩色转灰色用Y =0.299R + 0.587G + 0.114B)
+            var p=0;
+            var arr = new Array(width*height);
+            for(var i=0,l=width*height*4;i<l;i+=4){//一个颜色是rgba四个数值
+                arr[p++]=Math.floor(pixels[i]*0.299+pixels[i+1]*0.587+pixels[i+2]*0.114);
+            }
+            var p=0;
+            var output=new Array((width+1)*height);
+            for(var y=0;y<height;y++){
+                for (var x=0;x<width;x++){
+                    var index=Math.floor(arr[y*width+x]/16);
+                    output[p++]=map[index];
+                }
+                output[p++]="\r\n"; //换行
+            }
+            content.innerText=output.join("");
+        },false);
+    },false);
+</script>
+</html>
